@@ -39,7 +39,6 @@ class Hunyuan3DPaintConfig:
         self.device = "cuda"
 
         self.multiview_cfg_path = "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml"
-        self.multiview_cfg_path = "cfgs/hunyuan-paint-pbr.yaml"
 
         self.multiview_pretrained_path = "tencent/Hunyuan3D-2.1"
         self.dino_ckpt_path = "facebook/dinov2-giant"
