@@ -110,6 +110,7 @@ sys.path.insert(0, './hy3dshape')
 sys.path.insert(0, './hy3dpaint')
 from textureGenPipeline import Hunyuan3DPaintPipeline
 from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
+from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline
 
 # let's generate a mesh first
 shape_pipeline = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained('tencent/Hunyuan3D-2.1')
