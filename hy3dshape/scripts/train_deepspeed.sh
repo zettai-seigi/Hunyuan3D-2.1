@@ -56,7 +56,7 @@ else
 fi
 
 NODE_RANK=$node_rank \
-HF_HUB_OFFLINE=1 \
+HF_HUB_OFFLINE=0 \
 MASTER_PORT=12348 \
 MASTER_ADDR=$master_ip \
 NCCL_SOCKET_IFNAME=bond1 \

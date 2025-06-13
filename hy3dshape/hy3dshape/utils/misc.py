@@ -49,7 +49,10 @@ def instantiate_from_config(config, **kwargs):
     cls = get_obj_from_str(config["target"])
 
     if config.get("from_pretrained", None):
-        return cls.from_pretrained(config["from_pretrained"])
+        return cls.from_pretrained(
+                    config["from_pretrained"], 
+                    use_safetensors=config.get('use_safetensors', False),
+                    variant=config.get('variant', 'fp16'))
 
     params = config.get("params", dict())
     # params.update(kwargs)
