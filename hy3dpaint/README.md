@@ -4,7 +4,7 @@ Hunyuan3D-Paint 2.1 is a high quality PBR texture generation model for 3D meshes
 
 
 ## Quick Inference
-You need to manually download the RealESRGAN weights to the ckpt folder using the following command:
+You need to manually download the RealESRGAN weight to the `ckpt` folder using the following command:
 ```bash
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P ckpt
 ```
