@@ -734,9 +734,9 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str, default='tencent/Hunyuan3D-2')
-    parser.add_argument("--subfolder", type=str, default='hunyuan3d-dit-v2-0')
-    parser.add_argument("--texgen_model_path", type=str, default='tencent/Hunyuan3D-2')
+    parser.add_argument("--model_path", type=str, default='tencent/Hunyuan3D-2.1')
+    parser.add_argument("--subfolder", type=str, default='hunyuan3d-dit-v2-1')
+    parser.add_argument("--texgen_model_path", type=str, default='tencent/Hunyuan3D-2.1')
     parser.add_argument('--port', type=int, default=443)
     parser.add_argument('--host', type=str, default='0.0.0.0')
     parser.add_argument('--device', type=str, default='cuda')
@@ -798,6 +798,9 @@ if __name__ == '__main__':
 
             from hy3dpaint.textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
             conf = Hunyuan3DPaintConfig(max_num_view=8, resolution=768)
+            conf.realesrgan_ckpt_path = "hy3dpaint/ckpt/RealESRGAN_x4plus.pth"
+            conf.multiview_cfg_path = "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml"
+            conf.custom_pipeline = "hy3dpaint/hunyuanpaintpbr"
             tex_pipeline = Hunyuan3DPaintPipeline(conf)
         
             # Not help much, ignore for now.
@@ -831,7 +834,7 @@ if __name__ == '__main__':
     i23d_worker = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(
         args.model_path,
         subfolder=args.subfolder,
-        use_safetensors=True,
+        use_safetensors=False,
         device=args.device,
     )
     if args.enable_flashvdm:

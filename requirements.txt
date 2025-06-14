@@ -59,6 +59,8 @@ bpy==4.0
 onnxruntime==1.16.3
 torchmetrics==1.6.0
 
+pydantic==2.10.6
+
 timm
 pythreejs
 torchdiffeq

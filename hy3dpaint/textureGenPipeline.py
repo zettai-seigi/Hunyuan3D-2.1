@@ -38,8 +38,8 @@ class Hunyuan3DPaintConfig:
     def __init__(self, max_num_view, resolution):
         self.device = "cuda"
 
-        self.multiview_cfg_path = "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml"
-
+        self.multiview_cfg_path = "cfgs/hunyuan-paint-pbr.yaml"
+        self.custom_pipeline = "hunyuanpaintpbr"
         self.multiview_pretrained_path = "tencent/Hunyuan3D-2.1"
         self.dino_ckpt_path = "facebook/dinov2-giant"
         self.realesrgan_ckpt_path = "ckpt/RealESRGAN_x4plus.pth"
