@@ -813,6 +813,8 @@ if __name__ == '__main__':
             HAS_TEXTUREGEN = True
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print(f"Error loading texture generator: {e}")
             print("Failed to load texture generator.")
             print('Please try to install requirements by following README.md')
