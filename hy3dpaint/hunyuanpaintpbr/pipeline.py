@@ -45,8 +45,8 @@ from diffusers.utils import deprecate
 from diffusers.callbacks import MultiPipelineCallbacks, PipelineCallback
 from diffusers.image_processor import PipelineImageInput
 from diffusers.pipelines.stable_diffusion.pipeline_output import StableDiffusionPipelineOutput
-from .modules import UNet2p5DConditionModel
-from .attn_processor import SelfAttnProcessor2_0, RefAttnProcessor2_0, PoseRoPEAttnProcessor2_0
+from .unet.modules import UNet2p5DConditionModel
+from .unet.attn_processor import SelfAttnProcessor2_0, RefAttnProcessor2_0, PoseRoPEAttnProcessor2_0
 
 __all__ = [
     "HunyuanPaintPipeline",

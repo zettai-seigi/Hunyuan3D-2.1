@@ -13,14 +13,14 @@
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
 from .pipeline import HunyuanPaintPipeline
-from .model import HunyuanPaint
-from .modules import (
+from .unet.model import HunyuanPaint
+from .unet.modules import (
     Dino_v2,
     Basic2p5DTransformerBlock,
     ImageProjModel,
     UNet2p5DConditionModel,
 )
-from .attn_processor import (
+from .unet.attn_processor import (
     PoseRoPEAttnProcessor2_0,
     SelfAttnProcessor2_0,
     RefAttnProcessor2_0,
