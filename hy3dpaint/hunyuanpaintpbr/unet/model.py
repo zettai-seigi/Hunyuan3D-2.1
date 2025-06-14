@@ -32,9 +32,8 @@ from diffusers import (
     UNet2DConditionModel,
     ControlNetModel,
 )
-from .pipeline import UNet2p5DConditionModel
 
-from .modules import Dino_v2
+from .modules import Dino_v2, UNet2p5DConditionModel
 import math
 
 
