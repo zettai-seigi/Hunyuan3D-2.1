@@ -18,8 +18,7 @@ docker run -it --name hy3d21 -p 7860:7860 --gpus all hunyuan3d21 python gradio_a
 
 After first time:
 ```
-docker start hy3d21
-docker exec -it hy3d21 python gradio_app.py --port 7860
+docker start -a hy3d21
 ```
 
 Stop the container:
