@@ -97,6 +97,8 @@ cd ../..
 cd hy3dpaint/DifferentiableRenderer
 bash compile_mesh_painter.sh
 cd ../..
+
+wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P hy3dpaint/ckpt
 ```
 
 ### Code Usage
