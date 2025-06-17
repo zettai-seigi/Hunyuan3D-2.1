@@ -16,11 +16,11 @@ python3 demo.py
 ```
 **Optional arguments in `demo.py`:**
 
-- `max_num_view` : Maximum number of views, adaptively selected by the model (integer between 6 to 9)
+- `max_num_view` : Maximum number of views, adaptively selected by the model (integer between 6 to 12)
 
 - `resolution` : Resolution for generated PBR textures (512 or 768)
 
-**Memory Recommendation:** For `max_num_view=6` and `resolution=512`, we recommend using a GPU with at least **21GB VRAM**.
+**Memory Recommendation:** For `max_num_view=6` and `resolution=512`, we recommend using a GPU with at least **21GB VRAM**. 
 
 ## Training
 
