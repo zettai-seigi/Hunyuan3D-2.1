@@ -24,7 +24,7 @@
 
 ## 🔥 News
 
-- Jun 19, 2025: 👋 We present the [technical report](https://arxiv.org/abs/2506.15442) Hunyuan3D-2.1, please check out the details and spark some discussion!
+- Jun 19, 2025: 👋 We present the [technical report](https://arxiv.org/abs/2506.15442) of Hunyuan3D-2.1, please check out the details and spark some discussion!
 - Jun 13, 2025: 🤗 We release the first production-ready 3D asset generation model, Hunyuan3D-2.1!
 
 > Join our **[Wechat](#)** and **[Discord](https://discord.gg/dNBrdrGGMa)** group to discuss and find help from us.
