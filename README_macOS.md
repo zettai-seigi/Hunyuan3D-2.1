@@ -134,14 +134,42 @@ python demo.py
 - **Guidance Scale**: How closely to follow input
 - **Remove Background**: Auto-removes image background
 
+## 🛠 Technical Implementation Details
+
+### Platform Detection & Device Management
+- **`platform_utils.py`**: Centralized platform detection with singleton pattern
+- **Device Hierarchy**: Automatic CUDA → MPS → CPU fallback selection
+- **Apple Silicon Detection**: Specific ARM64 architecture detection for M1/M2/M3
+- **MPS Integration**: Metal Performance Shaders acceleration when available
+
+### CUDA Fallback Architecture
+- **Smart Import System**: Graceful handling of CUDA module import failures
+- **Custom Rasterizer Replacement**: Complete CPU-based rasterizer (`render_fallback.py`)
+- **Software Triangle Rasterization**: Barycentric interpolation with depth buffer management
+- **DeepSpeed Alternative**: DDP (Distributed Data Parallel) fallback for training
+
+### Memory Management Optimizations
+- **Unified Memory**: Leverages Apple Silicon's unified memory architecture
+- **MPS Fallback Environment**: `PYTORCH_ENABLE_MPS_FALLBACK=1` for unsupported operations
+- **Automatic Low-VRAM Mode**: Reduced batch sizes and resolution defaults
+- **System RAM Usage**: Graceful fallback when GPU memory unavailable
+
+### Error Handling & User Experience
+- **Progressive Feature Degradation**: Texture generation becomes optional when components unavailable
+- **Clear Performance Warnings**: Unicode icons (🍎, ⚠️, ✅) for visual feedback
+- **Transparent Limitations**: Explicit communication about 5-10x performance impact
+- **Multiple Entry Points**: Various launcher scripts for different use cases
+
 ## 🛠 macOS-Specific Files
 
-- **`requirements-macos.txt`**: CUDA-free dependencies
-- **`install-macos.sh`**: Automated installation script
-- **`run_gradio_macos.sh`**: Optimized web app launcher  
-- **`demo_macos.py`**: macOS-compatible demo
-- **`platform_utils.py`**: Cross-platform compatibility
-- **`gradio_macos.py`**: Alternative launcher
+- **`requirements-macos.txt`**: CUDA-free dependencies with version pinning
+- **`install-macos.sh`**: Automated installation with architecture detection
+- **`run_gradio_macos.sh`**: Optimized web app launcher with environment setup
+- **`demo_macos.py`**: macOS-compatible demo with conditional imports
+- **`platform_utils.py`**: Cross-platform compatibility layer
+- **`gradio_macos.py`**: Alternative launcher with MPS configuration
+- **`launch_gradio_macos.py`**: Direct import launcher for reduced overhead
+- **`render_fallback.py`**: CPU-based rasterizer replacement for CUDA kernels
 
 ## ⚠️ Limitations on macOS
 
