@@ -42,12 +42,7 @@ python3.11 -m venv hunyuan3d_env
 source hunyuan3d_env/bin/activate
 ```
 
-3. **Run automated macOS installer:**
-```bash
-bash install-macos.sh
-```
-
-**Or manual installation:**
+3. **Installation:**
 ```bash
 # Install PyTorch for macOS
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1
