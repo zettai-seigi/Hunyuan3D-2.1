@@ -18,6 +18,24 @@ import sys
 sys.path.insert(0, './hy3dshape')
 sys.path.insert(0, './hy3dpaint')
 
+# Import platform utilities for macOS compatibility
+try:
+    from platform_utils import get_platform, configure_torch_device, check_cuda_dependency
+except ImportError:
+    print("Warning: platform_utils not found, proceeding without platform detection")
+    # Fallback device detection
+    import torch
+    def get_platform():
+        import platform
+        return f"{platform.system()} {platform.machine()}"
+    def configure_torch_device():
+        if torch.cuda.is_available():
+            return 'cuda'
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            return 'mps'
+        return 'cpu'
+    def check_cuda_dependency(module_name):
+        return True
 
 try:
     from torchvision_fix import apply_fix
@@ -49,7 +67,7 @@ from hy3dshape.utils import logger
 from hy3dpaint.convert_utils import create_glb_with_pbr_materials
 
 
-MAX_SEED = 1e7
+MAX_SEED = int(1e7)  # Convert to integer for random.randint()
 ENV = "Local" # "Huggingface"
 if ENV == 'Huggingface':
     """
@@ -248,6 +266,7 @@ def _gen_shape(
     seed = int(randomize_seed_fn(seed, randomize_seed))
 
     octree_resolution = int(octree_resolution)
+    num_chunks = int(num_chunks)
     if caption: print('prompt is', caption)
     save_folder = gen_save_folder()
     stats = {
@@ -395,7 +414,11 @@ def generation_all(
                                                          height=HTML_HEIGHT, 
                                                          width=HTML_WIDTH, textured=True)
     if args.low_vram_mode:
-        torch.cuda.empty_cache()
+        if args.device == 'cuda' and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif args.device == 'mps' and hasattr(torch.backends, 'mps'):
+            if hasattr(torch.backends.mps, 'empty_cache'):
+                torch.backends.mps.empty_cache()
     return (
         gr.update(value=path),
         gr.update(value=glb_path_textured),
@@ -442,7 +465,11 @@ def shape_generation(
     path = export_mesh(mesh, save_folder, textured=False)
     model_viewer_html = build_model_viewer_html(save_folder, height=HTML_HEIGHT, width=HTML_WIDTH)
     if args.low_vram_mode:
-        torch.cuda.empty_cache()
+        if args.device == 'cuda' and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif args.device == 'mps' and hasattr(torch.backends, 'mps'):
+            if hasattr(torch.backends.mps, 'empty_cache'):
+                torch.backends.mps.empty_cache()
     return (
         gr.update(value=path),
         model_viewer_html,
@@ -562,10 +589,12 @@ Fast for very complex cases, Standard seldom use.',
                             octree_resolution = gr.Slider(maximum=512, 
                                                           minimum=16, 
                                                           value=256, 
+                                                          step=1,
                                                           label='Octree Resolution')
                         with gr.Row():
                             cfg_scale = gr.Number(value=5.0, label='Guidance Scale', min_width=100)
                             num_chunks = gr.Slider(maximum=5000000, minimum=1000, value=8000,
+                                                   step=1000,
                                                    label='Number of Chunks', min_width=100)
                     with gr.Tab("Export", id='tab_export'):
                         with gr.Row():
@@ -577,6 +606,7 @@ Fast for very complex cases, Standard seldom use.',
                             export_texture = gr.Checkbox(label='Include Texture', value=False,
                                                          visible=False, min_width=100)
                         target_face_num = gr.Slider(maximum=1000000, minimum=100, value=10000,
+                                                    step=100,
                                                     label='Target Face Number')
                         with gr.Row():
                             confirm_export = gr.Button(value="Transform", min_width=100)
@@ -685,6 +715,9 @@ Fast for very complex cases, Standard seldom use.',
             if file_out is None:
                 raise gr.Error('Please generate a mesh first.')
 
+            # Ensure target_face_num is an integer
+            target_face_num = int(target_face_num)
+            
             print(f'exporting {file_out}')
             print(f'reduce face to {target_face_num}')
             if export_texture:
@@ -739,7 +772,7 @@ if __name__ == '__main__':
     parser.add_argument("--texgen_model_path", type=str, default='tencent/Hunyuan3D-2.1')
     parser.add_argument('--port', type=int, default=8080)
     parser.add_argument('--host', type=str, default='0.0.0.0')
-    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--device', type=str, default=None, help='Device to use (auto-detected if not specified)')
     parser.add_argument('--mc_algo', type=str, default='mc')
     parser.add_argument('--cache-path', type=str, default='./save_dir')
     parser.add_argument('--enable_t23d', action='store_true')
@@ -749,6 +782,21 @@ if __name__ == '__main__':
     parser.add_argument('--low_vram_mode', action='store_true')
     args = parser.parse_args()
     args.enable_flashvdm = False
+    
+    # Auto-detect device if not specified
+    if args.device is None:
+        args.device = configure_torch_device()
+        print(f"🍎 Auto-detected device: {args.device}")
+    
+    # Print platform information
+    platform_info = get_platform()
+    print(f"🍎 Platform: {platform_info}")
+    
+    # Set MPS fallback for unsupported operations
+    if args.device == 'mps':
+        import os
+        os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+        print("🍎 Enabled MPS fallback for unsupported operations")
 
     SAVE_DIR = args.cache_path
     os.makedirs(SAVE_DIR, exist_ok=True)
@@ -781,6 +829,10 @@ if __name__ == '__main__':
     HAS_TEXTUREGEN = False
     if not args.disable_tex:
         try:
+            # Check platform compatibility for texture generation
+            if not check_cuda_dependency('texture_generation'):
+                print("⚠️  Texture generation may have limited functionality on this platform")
+            
             # Apply torchvision fix before importing basicsr/RealESRGAN
             print("Applying torchvision compatibility fix for texture generation...")
             try:
@@ -859,8 +911,13 @@ if __name__ == '__main__':
     app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
     shutil.copytree('./assets/env_maps', os.path.join(static_dir, 'env_maps'), dirs_exist_ok=True)
 
+    # Clear cache based on device type
     if args.low_vram_mode:
-        torch.cuda.empty_cache()
+        if args.device == 'cuda' and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif args.device == 'mps' and hasattr(torch.backends, 'mps'):
+            if hasattr(torch.backends.mps, 'empty_cache'):
+                torch.backends.mps.empty_cache()
     demo = build_app()
     app = gr.mount_gradio_app(app, demo, path="/")
     uvicorn.run(app, host=args.host, port=args.port)

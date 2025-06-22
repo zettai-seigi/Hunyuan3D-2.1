@@ -16,6 +16,7 @@ import copy
 import importlib
 import inspect
 import os
+import sys
 from typing import List, Optional, Union
 
 import numpy as np
@@ -30,6 +31,16 @@ from tqdm import tqdm
 from .models.autoencoders import ShapeVAE
 from .models.autoencoders import SurfaceExtractors
 from .utils import logger, synchronize_timer, smart_load_model
+
+# Add platform detection for device selection
+def _get_default_device():
+    """Get the best available device for this platform"""
+    if torch.cuda.is_available():
+        return 'cuda'
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return 'mps'
+    else:
+        return 'cpu'
 
 
 def retrieve_timesteps(
@@ -137,7 +148,7 @@ class Hunyuan3DDiTPipeline:
         cls,
         ckpt_path,
         config_path,
-        device='cuda',
+        device=None,
         dtype=torch.float16,
         use_safetensors=None,
         **kwargs,
@@ -177,6 +188,10 @@ class Hunyuan3DDiTPipeline:
         image_processor = instantiate_from_config(config['image_processor'])
         scheduler = instantiate_from_config(config['scheduler'])
 
+        # Use platform-appropriate device if not specified
+        if device is None:
+            device = _get_default_device()
+            
         model_kwargs = dict(
             vae=vae,
             model=model,
@@ -196,7 +211,7 @@ class Hunyuan3DDiTPipeline:
     def from_pretrained(
         cls,
         model_path,
-        device='cuda',
+        device=None,
         dtype=torch.float16,
         use_safetensors=False,
         variant='fp16',
@@ -217,6 +232,10 @@ class Hunyuan3DDiTPipeline:
             use_safetensors=use_safetensors,
             variant=variant
         )
+        # Use platform-appropriate device if not specified
+        if device is None:
+            device = _get_default_device()
+            
         return cls.from_single_file(
             ckpt_path,
             config_path,
@@ -233,7 +252,7 @@ class Hunyuan3DDiTPipeline:
         scheduler,
         conditioner,
         image_processor,
-        device='cuda',
+        device=None,
         dtype=torch.float16,
         **kwargs
     ):
@@ -243,6 +262,11 @@ class Hunyuan3DDiTPipeline:
         self.conditioner = conditioner
         self.image_processor = image_processor
         self.kwargs = kwargs
+        
+        # Use platform-appropriate device if not specified
+        if device is None:
+            device = _get_default_device()
+            
         self.to(device, dtype)
 
     def compile(self):
@@ -326,7 +350,7 @@ class Hunyuan3DDiTPipeline:
                     return torch.device(module._hf_hook.execution_device)
         return self.device
 
-    def enable_model_cpu_offload(self, gpu_id: Optional[int] = None, device: Union[torch.device, str] = "cuda"):
+    def enable_model_cpu_offload(self, gpu_id: Optional[int] = None, device: Union[torch.device, str] = None):
         r"""
         Offloads all models to CPU using accelerate, reducing memory usage with a low impact on performance. Compared
         to `enable_sequential_cpu_offload`, this method moves one whole model at a time to the GPU when its `forward`
@@ -350,6 +374,10 @@ class Hunyuan3DDiTPipeline:
         else:
             raise ImportError("`enable_model_cpu_offload` requires `accelerate v0.17.0` or higher.")
 
+        # Use platform-appropriate device if not specified
+        if device is None:
+            device = _get_default_device()
+            
         torch_device = torch.device(device)
         device_index = torch_device.index
 

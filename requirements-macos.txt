@@ -1,0 +1,70 @@
+# macOS-compatible requirements for Hunyuan3D-2.1
+# This file excludes CUDA-specific dependencies that are not available on macOS
+
+# Build Tools
+ninja==1.11.1.1
+pybind11==2.13.4
+
+# Core ML/Deep Learning
+transformers==4.46.0
+diffusers==0.30.0
+accelerate==1.1.1
+pytorch-lightning>=2.0.0  # Updated for Python 3.12 compatibility
+huggingface-hub==0.30.2
+safetensors==0.4.4
+
+# Scientific Computing
+numpy>=1.26.0  # Updated for Python 3.12 compatibility
+scipy==1.14.1
+einops==0.8.0
+pandas==2.2.2
+
+# Computer Vision & Image Processing
+opencv-python==4.10.0.84
+imageio==2.36.0
+scikit-image==0.24.0
+rembg==2.0.65
+# realesrgan==0.3.0  # Skipping due to basicsr dependency issues on macOS
+tb_nightly==2.18.0a20240726
+# basicsr==1.4.2  # Skipping due to build issues on macOS
+
+# 3D Mesh Processing
+trimesh==4.4.7
+# pymeshlab==2022.2.post3  # May have ARM64 issues - install manually if needed
+pygltflib==1.16.3
+# xatlas==0.0.9  # Skipping due to CMake build issues on macOS
+open3d>=0.18.0  # Use latest compatible version
+
+# Configuration Management
+omegaconf==2.3.0
+pyyaml==6.0.2
+configargparse==1.7
+
+# Web Framework (for demo)
+gradio==5.33.0
+fastapi==0.115.12
+uvicorn==0.34.3
+
+# Utilities
+tqdm==4.66.5
+psutil==6.0.0
+
+# ONNX Runtime (CPU version for macOS)
+onnxruntime>=1.17.0  # Updated for Python 3.12 compatibility
+torchmetrics==1.6.0
+
+pydantic==2.10.6
+
+timm
+pythreejs
+torchdiffeq
+
+# Note: The following packages are excluded for macOS compatibility:
+# - cupy-cuda12x==13.4.1 (CUDA not available on macOS)
+# - deepspeed (limited macOS support, optional for training)
+# - bpy==4.0 (Blender Python, can be problematic on ARM64)
+
+# For Apple Silicon users, you may need to install some packages differently:
+# - Use conda/mamba for better ARM64 support
+# - Install pymeshlab separately if the above version fails
+# - Some packages may require Rosetta 2 on M1/M2 Macs

@@ -36,6 +36,16 @@ from .surface_extractors import MCSurfaceExtractor, SurfaceExtractors
 from .volume_decoders import VanillaVolumeDecoder, FlashVDMVolumeDecoding, HierarchicalVolumeDecoding
 from ...utils import logger, synchronize_timer, smart_load_model
 
+# Add platform detection for device selection
+def _get_default_device():
+    """Get the best available device for this platform"""
+    if torch.cuda.is_available():
+        return 'cuda'
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return 'mps'
+    else:
+        return 'cpu'
+
 
 class DiagonalGaussianDistribution(object):
     def __init__(self, parameters: Union[torch.Tensor, List[torch.Tensor]], deterministic=False, feat_dim=1):
@@ -123,7 +133,7 @@ class VectsetVAE(nn.Module):
         cls,
         ckpt_path,
         config_path,
-        device='cuda',
+        device=None,
         dtype=torch.float16,
         use_safetensors=None,
         **kwargs,
@@ -150,6 +160,11 @@ class VectsetVAE(nn.Module):
 
         model = cls(**model_kwargs)
         model.load_state_dict(ckpt)
+        
+        # Use platform-appropriate device if not specified
+        if device is None:
+            device = _get_default_device()
+            
         model.to(device=device, dtype=dtype)
         return model
 
@@ -157,7 +172,7 @@ class VectsetVAE(nn.Module):
     def from_pretrained(
         cls,
         model_path,
-        device='cuda',
+        device=None,
         dtype=torch.float16,
         use_safetensors=False,
         variant='fp16',
@@ -171,6 +186,10 @@ class VectsetVAE(nn.Module):
             variant=variant
         )
 
+        # Use platform-appropriate device if not specified
+        if device is None:
+            device = _get_default_device()
+            
         return cls.from_single_file(
             ckpt_path,
             config_path,

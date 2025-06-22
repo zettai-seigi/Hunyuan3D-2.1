@@ -26,8 +26,16 @@ allow_ops_in_compiled_graph()
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, Callback
-from pytorch_lightning.strategies import DDPStrategy, DeepSpeedStrategy
+from pytorch_lightning.strategies import DDPStrategy
 from pytorch_lightning.loggers import Logger, TensorBoardLogger
+
+# Try to import DeepSpeed with fallback
+try:
+    from pytorch_lightning.strategies import DeepSpeedStrategy
+    DEEPSPEED_AVAILABLE = True
+except ImportError:
+    print("⚠️  DeepSpeed not available - training will use DDP strategy instead")
+    DEEPSPEED_AVAILABLE = False
 from pytorch_lightning.utilities import rank_zero_info
 
 from hy3dshape.utils import get_config_from_file, instantiate_from_config
@@ -166,10 +174,13 @@ if __name__ == "__main__":
 
     # Build trainer
     if args.num_nodes > 1 or args.num_gpus > 1:
-        if args.deepspeed:
+        if args.deepspeed and DEEPSPEED_AVAILABLE:
             ddp_strategy = DeepSpeedStrategy(stage=1)
-        elif args.deepspeed2:
+        elif args.deepspeed2 and DEEPSPEED_AVAILABLE:
             ddp_strategy = 'deepspeed_stage_2'
+        elif (args.deepspeed or args.deepspeed2) and not DEEPSPEED_AVAILABLE:
+            print("⚠️  DeepSpeed requested but not available - falling back to DDP")
+            ddp_strategy = DDPStrategy(find_unused_parameters=False, bucket_cap_mb=1500)
         else:
             ddp_strategy = DDPStrategy(find_unused_parameters=False, bucket_cap_mb=1500)
     else:
