@@ -27,7 +27,7 @@ A macOS-compatible version of Tencent's Hunyuan3D-2.1, the first production-read
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1.git
+git clone https://github.com/zettai-seigi/Hunyuan3D-2.1.git
 cd Hunyuan3D-2.1
 ```
 
