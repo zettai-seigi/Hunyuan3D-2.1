@@ -13,18 +13,19 @@
 # by Tencent in accordance with TENCENT HUNYUAN COMMUNITY LICENSE AGREEMENT.
 
 import torch
-import sys
-import os
+import warnings
 
-# Add platform utilities for CUDA detection
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from platform_utils import safe_cuda_import, check_cuda_dependency
-
-# Try to import CUDA rasterizer, fallback to CPU if not available
-custom_rasterizer_kernel = safe_cuda_import(
-    'custom_rasterizer_kernel',
-    "Custom CUDA rasterizer not available - using CPU fallback"
-)
+# Try to import CUDA rasterizer
+try:
+    import custom_rasterizer_kernel
+    HAS_CUDA_RASTERIZER = True
+except ImportError:
+    custom_rasterizer_kernel = None
+    HAS_CUDA_RASTERIZER = False
+    warnings.warn(
+        "Custom CUDA rasterizer not available. Using CPU fallback (slower performance).",
+        UserWarning
+    )
 
 # Import CPU fallback
 from .render_fallback import rasterize_cpu_fallback, interpolate_cpu_fallback
@@ -36,7 +37,7 @@ def rasterize(pos, tri, resolution, clamp_depth=torch.zeros(0), use_depth_prior=
     """
     assert pos.device == tri.device
     
-    if custom_rasterizer_kernel is not None and check_cuda_dependency("Custom rasterizer"):
+    if HAS_CUDA_RASTERIZER and pos.device.type == 'cuda':
         # Use CUDA implementation
         try:
             findices, barycentric = custom_rasterizer_kernel.rasterize_image(
@@ -44,10 +45,9 @@ def rasterize(pos, tri, resolution, clamp_depth=torch.zeros(0), use_depth_prior=
             )
             return findices, barycentric
         except Exception as e:
-            print(f"⚠️  CUDA rasterizer failed: {e}")
-            print("   Falling back to CPU implementation")
+            warnings.warn(f"CUDA rasterizer failed: {e}. Falling back to CPU implementation.")
     
-    # Use CPU fallback
+    # Use CPU fallback for MPS or when CUDA fails
     return rasterize_cpu_fallback(pos, tri, resolution, clamp_depth, use_depth_prior)
 
 
@@ -55,7 +55,7 @@ def interpolate(col, findices, barycentric, tri):
     """
     Interpolate vertex attributes with automatic CUDA/CPU fallback
     """
-    if custom_rasterizer_kernel is not None and check_cuda_dependency("Custom interpolation"):
+    if HAS_CUDA_RASTERIZER and col.device.type == 'cuda':
         # Use original CUDA implementation
         try:
             f = findices - 1 + (findices == 0)
@@ -64,8 +64,7 @@ def interpolate(col, findices, barycentric, tri):
             result = torch.sum(result, axis=-2)
             return result.view(1, *result.shape)
         except Exception as e:
-            print(f"⚠️  CUDA interpolation failed: {e}")
-            print("   Falling back to CPU implementation")
+            warnings.warn(f"CUDA interpolation failed: {e}. Falling back to CPU implementation.")
     
-    # Use CPU fallback
+    # Use CPU fallback for MPS or when CUDA fails
     return interpolate_cpu_fallback(col, findices, barycentric, tri)

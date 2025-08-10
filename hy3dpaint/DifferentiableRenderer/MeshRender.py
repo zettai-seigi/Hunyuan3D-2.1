@@ -334,7 +334,7 @@ class MeshRender:
         raster_mode="cr",
         shader_type="face",
         use_opengl=False,
-        device="cuda",
+        device=None,
     ):
         """
         Initialize mesh renderer with configurable parameters.
@@ -354,6 +354,16 @@ class MeshRender:
             device: Computing device ("cuda" or "cpu")
         """
 
+        # Auto-detect device if not specified
+        if device is None:
+            import torch
+            if torch.cuda.is_available():
+                device = "cuda"
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                device = "mps"
+            else:
+                device = "cpu"
+        
         self.device = device
 
         self.set_default_render_resolution(default_resolution)
@@ -674,8 +684,21 @@ class MeshRender:
             scale_factor: Scaling factor for mesh normalization
             auto_center: Whether to automatically center and scale the mesh
         """
-        self.vtx_pos = torch.from_numpy(vtx_pos).to(self.device)
-        self.pos_idx = torch.from_numpy(pos_idx).to(self.device)
+        # Convert numpy arrays to tensors with proper device handling
+        self.vtx_pos = torch.from_numpy(vtx_pos)
+        self.pos_idx = torch.from_numpy(pos_idx)
+        
+        # Move to device safely (handle MPS/CUDA/CPU)
+        if self.device != 'cpu':
+            try:
+                self.vtx_pos = self.vtx_pos.to(self.device)
+                self.pos_idx = self.pos_idx.to(self.device)
+            except Exception as e:
+                print(f"Warning: Failed to move tensors to {self.device}: {e}")
+                print("Falling back to CPU")
+                self.device = 'cpu'
+                self.vtx_pos = self.vtx_pos.to('cpu')
+                self.pos_idx = self.pos_idx.to('cpu')
 
         # 确保顶点位置是float32类型
         if self.vtx_pos.dtype == torch.float64:

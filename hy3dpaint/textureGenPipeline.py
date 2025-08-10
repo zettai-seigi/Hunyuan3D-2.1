@@ -36,7 +36,14 @@ diffusers_logging.set_verbosity(50)
 
 class Hunyuan3DPaintConfig:
     def __init__(self, max_num_view, resolution):
-        self.device = "cuda"
+        # Auto-detect device - use MPS on Apple Silicon, CUDA if available, else CPU
+        import torch
+        if torch.cuda.is_available():
+            self.device = "cuda"
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            self.device = "mps"
+        else:
+            self.device = "cpu"
 
         self.multiview_cfg_path = "cfgs/hunyuan-paint-pbr.yaml"
         self.custom_pipeline = "hunyuanpaintpbr"
@@ -79,12 +86,19 @@ class Hunyuan3DPaintPipeline:
             texture_size=self.config.texture_size,
             bake_mode=self.config.bake_mode,
             raster_mode=self.config.raster_mode,
+            device=self.config.device,  # Pass the auto-detected device
         )
         self.view_processor = ViewProcessor(self.config, self.render)
         self.load_models()
 
     def load_models(self):
-        torch.cuda.empty_cache()
+        # Only clear CUDA cache if CUDA is available
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            # MPS doesn't have explicit cache clearing, but we can trigger garbage collection
+            import gc
+            gc.collect()
         self.models["super_model"] = imageSuperNet(self.config)
         self.models["multiview_model"] = multiviewDiffusionNet(self.config)
         print("Models Loaded.")
